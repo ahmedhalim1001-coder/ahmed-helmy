@@ -252,6 +252,8 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative;
+    overflow: hidden;
 }
 
 .dark-mode .property-image-container {
@@ -259,9 +261,26 @@ body {
 }
 
 .property-image {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.property-image.placeholder {
+    filter: blur(15px);
+    transform: scale(1.1);
+}
+
+.property-image.final {
+    opacity: 0;
+    transition: opacity 0.4s ease-in;
+}
+
+.property-image.final.visible {
+    opacity: 1;
 }
 
 .image-loader {
@@ -412,6 +431,54 @@ body {
 .map-modal-close { background: none; border: none; font-size: 2rem; cursor: pointer; color: var(--text-color-light); line-height: 1; }
 .map-modal-body { flex-grow: 1; margin-top: 1rem; border-radius: 8px; overflow: hidden; }
 .map-modal-body iframe { width: 100%; height: 100%; border: none; }
+
+
+/* --- Skeleton Loader --- */
+.property-card.skeleton {
+    pointer-events: none;
+}
+.skeleton-image, .skeleton-line, .skeleton-button {
+    background-color: var(--border-color-light);
+    animation: shimmer 1.5s infinite linear;
+    background-image: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background-size: 200% 100%;
+}
+.dark-mode .skeleton-image, .dark-mode .skeleton-line, .dark-mode .skeleton-button {
+   background-image: linear-gradient(90deg, transparent, rgba(0,0,0,0.2), transparent);
+}
+
+.skeleton-line {
+    height: 1em;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+.skeleton-line.title {
+    height: 1.5em;
+    margin-bottom: 0.75rem;
+    width: 70%;
+}
+.skeleton-line.short {
+    width: 90%;
+    margin-bottom: 1.25rem;
+}
+.skeleton-line.price {
+    height: 1.75em;
+    width: 50%;
+    margin-top: 1rem;
+    margin-bottom: 0;
+}
+.property-specs .skeleton-line {
+    margin-bottom: 0;
+}
+.skeleton-button {
+    height: 40px;
+    flex-grow: 1;
+    border-radius: 6px;
+}
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
 
 /* --- Responsive adjustments --- */
 @media (max-width: 1024px) {
