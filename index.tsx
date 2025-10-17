@@ -25,7 +25,8 @@ const translations = {
     filtersTitle: "Filters",
     location: "Location",
     propertyType: "Property Type",
-    all: "All"
+    all: "All",
+    neighborhoodTitle: "Neighborhood Highlights"
   },
   ar: {
     title: "ahmed helmy",
@@ -49,7 +50,8 @@ const translations = {
     filtersTitle: "تصفية النتائج",
     location: "الموقع",
     propertyType: "نوع العقار",
-    all: "الكل"
+    all: "الكل",
+    neighborhoodTitle: "مميزات المنطقة"
   },
 };
 
@@ -62,7 +64,7 @@ const AreaIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24
 const LocationIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 005.169-4.4c3.95-6.193 3.4-11.952-1.2-15.54C15.34.468 12.26 0 8.5 0 4.74 0 1.66.468.04 3.486-4.56 7.073-4.01 12.833-.06 19.023a16.975 16.975 0 005.169 4.4c.195.11.39.213.58.309zM12 2.25c2.518 0 4.886.953 6.625 2.658 2.348 2.305 3.235 5.823 1.838 9.394-.725 1.83-2.06 3.73-3.8 5.613a15.483 15.483 0 01-4.663 3.633.45.45 0 01-.4 0A15.483 15.483 0 017.04 19.923c-1.74-1.883-3.075-3.783-3.8-5.613-1.397-3.57-0.51-7.09 1.838-9.394C6.826 3.33 9.4.99 12 .99z" clipRule="evenodd" /><path d="M12 6.75a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5zM8.25 10.5a3.75 3.75 0 117.5 0 3.75 3.75 0 01-7.5 0z" /></svg> );
 const MenuIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" width="24" height="24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>);
 const CloseIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" width="24" height="24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>);
-
+const CheckIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.052-.143Z" clipRule="evenodd" /></svg>);
 
 const formatPrice = (price, language) => new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US').format(price);
 
@@ -76,6 +78,7 @@ const SkeletonCard = () => (
         </div>
         <div className="skeleton-line title"></div>
         <div className="skeleton-line short"></div>
+         <div className="skeleton-line" style={{ height: '3em' }}></div>
         <div className="property-specs">
           <div className="skeleton-line" style={{ width: '25%' }}></div>
           <div className="skeleton-line" style={{ width: '25%' }}></div>
@@ -114,7 +117,7 @@ const PropertyCard = ({ prop, language, imageSrcs, onImageNeeded, onShowMap }) =
       const observer = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
-            onImageNeeded(prop.id, prop.description.en);
+            onImageNeeded(prop.id, prop.title?.en);
             observer.unobserve(entry.target);
           }
         },
@@ -128,7 +131,7 @@ const PropertyCard = ({ prop, language, imageSrcs, onImageNeeded, onShowMap }) =
           observer.unobserve(cardRef.current);
         }
       };
-    }, [prop.id, prop.description.en, lq, hq, onImageNeeded]);
+    }, [prop.id, prop.title?.en, lq, hq, onImageNeeded]);
 
     return (
         <div ref={cardRef} className="property-card">
@@ -137,28 +140,41 @@ const PropertyCard = ({ prop, language, imageSrcs, onImageNeeded, onShowMap }) =
                 { lq && 
                     <img 
                         src={lq} 
-                        alt={`${prop.title[language]} placeholder`}
+                        alt={`${prop.title?.[language] || ''} placeholder`}
                         className="property-image placeholder"
                     /> 
                 }
                 { hq && 
                     <img 
                         src={hq} 
-                        alt={prop.title[language]}
+                        alt={prop.title?.[language] || ''}
                         className={`property-image final ${isHqLoaded ? 'visible' : ''}`}
                     />
                 }
             </div>
             <div className="property-details">
                 <div className="property-meta">
-                    <span className="property-type">{prop.propertyType[language]}</span>
+                    <span className="property-type">{prop.propertyType?.[language]}</span>
                     <span className="property-agency">{prop.agency}</span>
                 </div>
-                <h2 className="property-title">{prop.title[language]}</h2>
+                <h2 className="property-title">{prop.title?.[language]}</h2>
                 <div className="property-location">
                     <LocationIcon />
-                    <span>{prop.location_string[language]}</span>
+                    <span>{prop.location_string?.[language]}</span>
                 </div>
+                 <p className="property-description">{prop.description?.[language]}</p>
+                 
+                {prop.neighborhood_highlights && (
+                    <div className="neighborhood-highlights">
+                        <h4 className="highlights-title">{t.neighborhoodTitle}</h4>
+                        <ul>
+                            {prop.neighborhood_highlights?.[language]?.map((item, index) => (
+                                <li key={index}><CheckIcon /> {item}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+                
                 <div className="property-specs">
                     <div className="spec-item"><BedIcon /><span>{prop.bedrooms} {t.bedrooms}</span></div>
                     <div className="spec-item"><BathIcon /><span>{prop.bathrooms} {t.bathrooms}</span></div>
@@ -226,7 +242,7 @@ const App = () => {
         try {
             const result = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
-                contents: `Generate a list of 12 fictional luxury real estate properties for sale in Egypt. Six in "New Cairo" and six in "6th of October City". Provide a JSON array. Each object needs: id, title (en/ar), description (en/ar, short marketing phrase), location_string (en/ar, e.g., "Mivida, New Cairo"), price (EGP), downPayment (EGP), propertyType (en/ar, e.g., "Villa", "Apartment", "Townhouse"), bedrooms (number), bathrooms (number), area (sqm), agency (fictional name), and location (lat/lng).`,
+                contents: `Generate a list of 12 fictional luxury real estate properties for sale in Egypt. Six in "New Cairo" and six in "6th of October City". Provide a JSON array. Each object needs: id, title (en/ar), description (en/ar, a compelling 2-3 sentence narrative about the lifestyle this property offers), location_string (en/ar, e.g., "Mivida, New Cairo"), price (EGP), downPayment (EGP), propertyType (en/ar, e.g., "Villa", "Apartment"), bedrooms, bathrooms, area (sqm), agency (fictional name), location (lat/lng), and neighborhood_highlights (en/ar, an array of 3 short, key features of the surrounding area like '5 minutes from AUC' or 'Overlooks a central park').`,
                 config: {
                     responseMimeType: "application/json",
                     responseSchema: {
@@ -245,7 +261,14 @@ const App = () => {
                                 bathrooms: { type: Type.NUMBER },
                                 area: { type: Type.NUMBER },
                                 agency: { type: Type.STRING },
-                                location: { type: Type.OBJECT, properties: { lat: { type: Type.NUMBER }, lng: { type: Type.NUMBER } } }
+                                location: { type: Type.OBJECT, properties: { lat: { type: Type.NUMBER }, lng: { type: Type.NUMBER } } },
+                                neighborhood_highlights: { 
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        en: { type: Type.ARRAY, items: { type: Type.STRING }},
+                                        ar: { type: Type.ARRAY, items: { type: Type.STRING }}
+                                    }
+                                }
                             }
                         }
                     }
@@ -266,7 +289,7 @@ const App = () => {
   }, [ai, language]);
 
   const fetchImageForProperty = useCallback(async (id, description) => {
-    if (imageCache[id]) return;
+    if (imageCache[id] || !description) return;
 
     setImageCache(prev => ({ ...prev, [id]: { lq: undefined, hq: undefined } }));
 
@@ -290,7 +313,7 @@ const App = () => {
     try {
         const hqResponse = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
-            contents: { parts: [{ text: `Generate a photorealistic, high-end architectural photograph of a modern luxury property exterior based on this: "${description}"` }] },
+            contents: { parts: [{ text: `Professional real estate photography of a modern luxury property exterior. Golden hour lighting, wide-angle lens, crisp details, vibrant but natural colors. Based on this title: "${description}"` }] },
             config: { responseModalities: ['IMAGE'] },
         });
         const hqPart = hqResponse.candidates[0]?.content?.parts.find(p => p.inlineData);
@@ -321,20 +344,20 @@ const App = () => {
   };
 
   const uniqueLocations = useMemo(() => {
-    const locations = properties.map(p => p.location_string[language].split(',')[1]?.trim()).filter(Boolean);
+    const locations = properties.map(p => p.location_string?.[language]?.split(',')[1]?.trim()).filter(Boolean);
     return [...new Set(locations)];
   }, [properties, language]);
 
   const uniquePropTypes = useMemo(() => {
-    const types = properties.map(p => p.propertyType[language]).filter(Boolean);
+    const types = properties.map(p => p.propertyType?.[language]).filter(Boolean);
     return [...new Set(types)];
   }, [properties, language]);
 
 
   const filteredProperties = useMemo(() => {
     return properties.filter(prop => {
-        const locationMatch = filters.location === 'all' || prop.location_string[language].includes(filters.location);
-        const typeMatch = filters.propertyType === 'all' || prop.propertyType[language] === filters.propertyType;
+        const locationMatch = filters.location === 'all' || prop.location_string?.[language]?.includes(filters.location);
+        const typeMatch = filters.propertyType === 'all' || prop.propertyType?.[language] === filters.propertyType;
         return locationMatch && typeMatch;
     });
   }, [properties, filters, language]);
@@ -406,7 +429,7 @@ const App = () => {
         <div className="map-modal-overlay" onClick={() => setMapProperty(null)}>
           <div className="map-modal-content" onClick={e => e.stopPropagation()}>
             <div className="map-modal-header"><h3>{t.mapTitle}</h3><button className="map-modal-close" onClick={() => setMapProperty(null)}>&times;</button></div>
-            <div className="map-modal-body"><iframe title={mapProperty.title[language]} src={`https://www.google.com/maps/embed/v1/place?key=${process.env.GOOGLE_MAPS_API_KEY}&q=${mapProperty.location.lat},${mapProperty.location.lng}&zoom=15`} allowFullScreen></iframe></div>
+            <div className="map-modal-body"><iframe title={mapProperty.title?.[language] || 'Property Location'} src={`https://www.google.com/maps/embed/v1/place?key=${process.env.GOOGLE_MAPS_API_KEY}&q=${mapProperty.location.lat},${mapProperty.location.lng}&zoom=15`} allowFullScreen></iframe></div>
           </div>
         </div>
       )}

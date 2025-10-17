@@ -4,8 +4,10 @@
   --card-bg-light: #ffffff;
   --header-bg-light: #ffffff;
   --border-color-light: #dee2e6;
-  --primary-color: #d90a2c; /* Property Finder Red */
-  --primary-hover: #b30824;
+  --primary-color: #004a7c; /* Professional Blue */
+  --primary-hover: #003b62;
+  --accent-color: #e67e22; /* Vibrant Orange */
+  --accent-hover: #d35400;
   --secondary-text-color: #6c757d;
   --shadow-color: rgba(0, 0, 0, 0.075);
   --button-text-color: #ffffff;
@@ -31,6 +33,10 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif;
 }
 
 #root {
@@ -83,6 +89,7 @@ body {
     font-weight: bold;
     position: relative;
     padding: 0.5rem 0;
+    font-family: 'Montserrat', sans-serif;
 }
 
 .nav-link::after {
@@ -193,6 +200,7 @@ body {
     font-weight: bold;
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
+    font-family: 'Montserrat', sans-serif;
 }
 
 .filter-group select {
@@ -287,7 +295,7 @@ body {
     width: 40px;
     height: 40px;
     border: 4px solid var(--border-color-light);
-    border-top: 4px solid var(--primary-color);
+    border-top: 4px solid var(--accent-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -332,7 +340,7 @@ body {
     align-items: center;
     gap: 0.5rem;
     color: var(--secondary-text-color);
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .property-location svg {
@@ -340,11 +348,51 @@ body {
     flex-shrink: 0;
 }
 
+.property-description {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--secondary-text-color);
+    margin: 0 0 1rem;
+}
+
+.neighborhood-highlights {
+    margin-bottom: 1rem;
+}
+
+.highlights-title {
+    font-size: 0.9rem;
+    margin: 0 0 0.5rem;
+    font-weight: bold;
+    color: var(--text-color-light);
+}
+
+.neighborhood-highlights ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--secondary-text-color);
+}
+
+.neighborhood-highlights li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.neighborhood-highlights svg {
+    color: var(--primary-color);
+    flex-shrink: 0;
+}
+
 .property-specs {
     display: flex;
     gap: 1.5rem;
     margin-bottom: auto;
+    padding-top: 1rem;
     padding-bottom: 1rem;
+    border-top: 1px solid var(--border-color-light);
 }
 
 .spec-item {
@@ -395,14 +443,22 @@ body {
     cursor: pointer;
     text-align: center;
     font-weight: bold;
-    font-family: inherit;
-    transition: background-color 0.2s, color 0.2s;
+    font-family: 'Montserrat', sans-serif;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
 
 .action-button.primary-action {
-    background-color: var(--primary-color);
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
     color: var(--button-text-color);
 }
+
+.action-button.primary-action:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
+    color: var(--button-text-color);
+}
+
 
 .action-button:hover {
     background-color: var(--primary-hover);
@@ -459,7 +515,7 @@ body {
 }
 .skeleton-line.short {
     width: 90%;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
 }
 .skeleton-line.price {
     height: 1.75em;
@@ -469,6 +525,7 @@ body {
 }
 .property-specs .skeleton-line {
     margin-bottom: 0;
+    margin-top: 1rem;
 }
 .skeleton-button {
     height: 40px;
