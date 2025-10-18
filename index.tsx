@@ -371,7 +371,7 @@ const NeighborhoodReportModal = ({ neighborhood, onClose, language, ai }) => {
     );
 };
 
-const MortgageCalculator = ({ t }) => {
+const MortgageCalculator = ({ t, language }) => {
     const [price, setPrice] = useState(5000000);
     const [downPayment, setDownPayment] = useState(1000000);
     const [term, setTerm] = useState(20);
@@ -389,13 +389,12 @@ const MortgageCalculator = ({ t }) => {
     
     return (
         <div className="mortgage-calculator">
-             <h3 className="sidebar-subtitle">{t.mortgageCalculator}</h3>
              <div className="filter-group">
-                <label>{t.propertyPrice}: {formatPrice(price, t.toggleLang === 'English' ? 'ar' : 'en')} {t.priceUnit}</label>
+                <label>{t.propertyPrice}: {formatPrice(price, language)} {t.priceUnit}</label>
                 <input type="range" min="500000" max="20000000" step="100000" value={price} onChange={e => setPrice(Number(e.target.value))} />
              </div>
              <div className="filter-group">
-                <label>{t.downPayment}: {formatPrice(downPayment, t.toggleLang === 'English' ? 'ar' : 'en')} {t.priceUnit}</label>
+                <label>{t.downPayment}: {formatPrice(downPayment, language)} {t.priceUnit}</label>
                 <input type="range" min="100000" max={price} step="50000" value={downPayment} onChange={e => setDownPayment(Number(e.target.value))} />
              </div>
              <div className="filter-group">
@@ -408,7 +407,7 @@ const MortgageCalculator = ({ t }) => {
              </div>
              <div className="monthly-payment">
                 <h4>{t.monthlyPayment}</h4>
-                <p>{formatPrice(monthlyPayment.toFixed(0), t.toggleLang === 'English' ? 'ar' : 'en')} {t.priceUnit}</p>
+                <p>{formatPrice(monthlyPayment.toFixed(0), language)} {t.priceUnit}</p>
              </div>
         </div>
     );
@@ -433,6 +432,8 @@ const App = () => {
   const [comparisonItems, setComparisonItems] = useState([]);
   const [showComparison, setShowComparison] = useState(false);
   const [reportingNeighborhood, setReportingNeighborhood] = useState(null);
+  const [showFeaturesModal, setShowFeaturesModal] = useState(false);
+  const [showMortgageModal, setShowMortgageModal] = useState(false);
   const [filters, setFilters] = useState({
     location: 'all',
     propertyType: 'all',
@@ -592,56 +593,54 @@ const App = () => {
         </div>
       </header>
       
-      <div className="app-body">
-        <aside className="sidebar">
-            <h2 className="sidebar-title">{t.filtersTitle}</h2>
-            <div className="filter-group">
-                <label htmlFor="location-filter">{t.location}</label>
-                <div className="location-filter-container">
-                    <select id="location-filter" name="location" value={filters.location} onChange={handleFilterChange}>
-                        <option value="all">{t.all}</option>
-                        {uniqueLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
-                    </select>
-                    <button className="view-report-btn" onClick={() => filters.location !== 'all' && setReportingNeighborhood(filters.location)} disabled={filters.location === 'all'}>{t.viewReport}</button>
-                </div>
-            </div>
-            <div className="filter-group">
-                <label htmlFor="type-filter">{t.propertyType}</label>
-                <select id="type-filter" name="propertyType" value={filters.propertyType} onChange={handleFilterChange}>
-                    <option value="all">{t.all}</option>
-                    {uniquePropTypes.map(type => <option key={type} value={type}>{type}</option>)}
-                </select>
-            </div>
-            <div className="filter-group">
-                <h3 className="sidebar-subtitle">{t.dreamFeaturesTitle}</h3>
-                <div className="features-grid">
-                    {Object.keys(DREAM_FEATURES).map(key => (
-                        <button key={key} className={`feature-button ${filters.features.includes(key) ? 'active' : ''}`} onClick={() => handleFeatureToggle(key)}>
-                            {DREAM_FEATURES[key][language]}
-                        </button>
-                    ))}
-                </div>
-            </div>
-             <MortgageCalculator t={t} />
-        </aside>
-
-        <main className="main-content">
+      <main className="main-content">
             <HeroBanner t={t} />
-            {error && <div className="error">{error}</div>}
-            <div className="property-list">
-                {loading && Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
-                {!loading && !error && filteredProperties.map(prop => (
-                    <PropertyCard 
-                        key={prop.id} prop={prop} language={language}
-                        imageSrcs={getImageForProp(prop)}
-                        onShowMap={setMapProperty}
-                        onCompareToggle={handleCompareToggle}
-                        isCompared={comparisonItems.includes(prop.id)}
-                    />
-                ))}
+
+            <div className="filters-container">
+                <div className="filter-group">
+                    <label htmlFor="location-filter">{t.location}</label>
+                    <div className="location-filter-container">
+                        <select id="location-filter" name="location" value={filters.location} onChange={handleFilterChange}>
+                            <option value="all">{t.all}</option>
+                            {uniqueLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+                        </select>
+                        <button className="view-report-btn" onClick={() => filters.location !== 'all' && setReportingNeighborhood(filters.location)} disabled={filters.location === 'all'}>{t.viewReport}</button>
+                    </div>
+                </div>
+                <div className="filter-group">
+                    <label htmlFor="type-filter">{t.propertyType}</label>
+                    <select id="type-filter" name="propertyType" value={filters.propertyType} onChange={handleFilterChange}>
+                        <option value="all">{t.all}</option>
+                        {uniquePropTypes.map(type => <option key={type} value={type}>{type}</option>)}
+                    </select>
+                </div>
+                <div className="filter-group">
+                    <button className="modal-trigger-button" onClick={() => setShowFeaturesModal(true)}>
+                        {t.dreamFeaturesTitle}
+                        {filters.features.length > 0 && <span className="feature-count">{filters.features.length}</span>}
+                    </button>
+                </div>
+                 <div className="filter-group">
+                    <button className="modal-trigger-button" onClick={() => setShowMortgageModal(true)}>{t.mortgageCalculator}</button>
+                </div>
             </div>
-        </main>
-      </div>
+
+            <div className="property-list-container">
+              {error && <div className="error">{error}</div>}
+              <div className="property-list">
+                  {loading && Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+                  {!loading && !error && filteredProperties.map(prop => (
+                      <PropertyCard 
+                          key={prop.id} prop={prop} language={language}
+                          imageSrcs={getImageForProp(prop)}
+                          onShowMap={setMapProperty}
+                          onCompareToggle={handleCompareToggle}
+                          isCompared={comparisonItems.includes(prop.id)}
+                      />
+                  ))}
+              </div>
+            </div>
+      </main>
 
       {comparisonItems.length > 0 && (
           <div className="comparison-bar">
@@ -657,6 +656,40 @@ const App = () => {
 
       {showComparison && (
           <ComparisonModal properties={comparisonProperties} onClose={() => setShowComparison(false)} language={language} />
+      )}
+       
+      {showFeaturesModal && (
+        <div className="map-modal-overlay" onClick={() => setShowFeaturesModal(false)}>
+            <div className="map-modal-content" onClick={e => e.stopPropagation()}>
+                <div className="map-modal-header">
+                    <h3>{t.dreamFeaturesTitle}</h3>
+                    <button className="map-modal-close" onClick={() => setShowFeaturesModal(false)}>&times;</button>
+                </div>
+                <div className="map-modal-body">
+                    <div className="features-grid">
+                        {Object.keys(DREAM_FEATURES).map(key => (
+                            <button key={key} className={`feature-button ${filters.features.includes(key) ? 'active' : ''}`} onClick={() => handleFeatureToggle(key)}>
+                                {DREAM_FEATURES[key][language]}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+      )}
+
+      {showMortgageModal && (
+        <div className="map-modal-overlay" onClick={() => setShowMortgageModal(false)}>
+            <div className="map-modal-content" onClick={e => e.stopPropagation()}>
+                <div className="map-modal-header">
+                    <h3>{t.mortgageCalculator}</h3>
+                    <button className="map-modal-close" onClick={() => setShowMortgageModal(false)}>&times;</button>
+                </div>
+                <div className="map-modal-body">
+                    <MortgageCalculator t={t} language={language} />
+                </div>
+            </div>
+        </div>
       )}
 
       {reportingNeighborhood && (
