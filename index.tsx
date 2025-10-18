@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
+import { villaImages, apartmentImages, fallbackImage } from './imageData.tsx';
 
 const translations = {
   en: {
@@ -22,11 +23,29 @@ const translations = {
     about: "About Us",
     projects: "Projects",
     contact: "Contact",
-    filtersTitle: "Filters",
+    filtersTitle: "Dream Home Builder",
     location: "Location",
     propertyType: "Property Type",
     all: "All",
-    neighborhoodTitle: "Neighborhood Highlights"
+    neighborhoodTitle: "Neighborhood Highlights",
+    dreamFeaturesTitle: "Select Your Dream Features",
+    compare: "Compare",
+    compareNow: "Compare Now",
+    clearComparison: "Clear",
+    comparisonTitle: "Property Comparison",
+    finishingQuality: "Finishing Quality",
+    quietnessScore: "Quietness Score",
+    neighborhoodReport: "Neighborhood Report",
+    viewReport: "View Report",
+    liveabilityScore: "Liveability Score",
+    priceTrend: "12-Month Price Trend",
+    mortgageCalculator: "Mortgage Calculator",
+    propertyPrice: "Property Price",
+    loanTerm: "Loan Term (Years)",
+    interestRate: "Interest Rate (%)",
+    monthlyPayment: "Monthly Payment",
+    heroTitle: "Find Your Future Home",
+    heroSubtitle: "The most exclusive properties, tailored for you."
   },
   ar: {
     title: "ahmed helmy",
@@ -47,11 +66,29 @@ const translations = {
     about: "من نحن",
     projects: "مشاريعنا",
     contact: "اتصل بنا",
-    filtersTitle: "تصفية النتائج",
+    filtersTitle: "مُنشئ بيت الأحلام",
     location: "الموقع",
     propertyType: "نوع العقار",
     all: "الكل",
-    neighborhoodTitle: "مميزات المنطقة"
+    neighborhoodTitle: "مميزات المنطقة",
+    dreamFeaturesTitle: "اختر مواصفات حلمك",
+    compare: "قارن",
+    compareNow: "قارن الآن",
+    clearComparison: "مسح",
+    comparisonTitle: "مقارنة العقارات",
+    finishingQuality: "جودة التشطيب",
+    quietnessScore: "مستوى الهدوء",
+    neighborhoodReport: "تقرير الحي",
+    viewReport: "عرض التقرير",
+    liveabilityScore: "مؤشر جودة الحياة",
+    priceTrend: "اتجاه الأسعار لآخر 12 شهرًا",
+    mortgageCalculator: "حاسبة التمويل العقاري",
+    propertyPrice: "سعر العقار",
+    loanTerm: "مدة القرض (سنوات)",
+    interestRate: "نسبة الفائدة (%)",
+    monthlyPayment: "القسط الشهري",
+    heroTitle: "ابحث عن منزل مستقبلك",
+    heroSubtitle: "أفخم العقارات، مصممة خصيصاً لك."
   },
 };
 
@@ -65,8 +102,37 @@ const LocationIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 
 const MenuIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" width="24" height="24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>);
 const CloseIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" width="24" height="24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>);
 const CheckIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.052-.143Z" clipRule="evenodd" /></svg>);
+const StarIcon = ({filled}) => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`star-icon ${filled ? 'filled' : ''}`} width="16" height="16"><path fillRule="evenodd" d="M10.868 2.884c.321-.662 1.134-.662 1.456 0l2.033 4.192c.11.226.313.39.55.43l4.63.672c.725.105 1.014.992.49 1.498l-3.35 3.265a.752.752 0 0 0-.215.664l.79 4.612c.124.722-.63.1.277-1.043l-4.14-2.176a.75.75 0 0 0-.702 0l-4.14 2.176c-.63.33-1.155-.32-1.03-1.043l.79-4.612a.752.752 0 0 0-.215-.664L.49 9.676c-.524-.506-.235-1.393.49-1.498l4.63-.672a.75.75 0 0 0 .55-.43L9.13 2.884Z" clipRule="evenodd" /></svg>);
+
+const DREAM_FEATURES = {
+    pool: { en: "Private Pool", ar: "حمام سباحة خاص" },
+    view: { en: "Sea View", ar: "إطلالة بحرية" },
+    luxury_finish: { en: "Luxury Finish", ar: "تشطيبات فاخرة" },
+    garden: { en: "Private Garden", ar: "حديقة خاصة" },
+    gym: { en: "Near a Gym", ar: "قرب من الجيم" },
+    quiet: { en: "Quiet Area", ar: "منطقة هادئة" },
+};
 
 const formatPrice = (price, language) => new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : 'en-US').format(price);
+
+let audioContext;
+const playSound = () => {
+  if (!audioContext) {
+    // FIX: Property 'webkitAudioContext' does not exist on type 'Window & typeof globalThis'. Cast to any to support older browsers.
+    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5 note
+  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.5);
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.5);
+};
+
 
 const SkeletonCard = () => (
     <div className="property-card skeleton">
@@ -95,9 +161,8 @@ const SkeletonCard = () => (
     </div>
   );
 
-const PropertyCard = ({ prop, language, imageSrcs, onImageNeeded, onShowMap }) => {
+const PropertyCard = ({ prop, language, imageSrcs, onShowMap, onCompareToggle, isCompared }) => {
     const t = translations[language];
-    const cardRef = useRef(null);
     const { lq, hq } = imageSrcs || {};
     const [isHqLoaded, setIsHqLoaded] = useState(false);
 
@@ -105,92 +170,256 @@ const PropertyCard = ({ prop, language, imageSrcs, onImageNeeded, onShowMap }) =
         if (hq) {
             const img = new Image();
             img.src = hq;
-            img.onload = () => {
-                setIsHqLoaded(true);
-            };
+            img.onload = () => setIsHqLoaded(true);
         }
     }, [hq]);
-  
-    useEffect(() => {
-      if (!cardRef.current || lq || hq) return;
-  
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            onImageNeeded(prop.id, prop.title?.en);
-            observer.unobserve(entry.target);
-          }
-        },
-        { rootMargin: '0px 0px 200px 0px' } 
-      );
-  
-      observer.observe(cardRef.current);
-  
-      return () => {
-        if (cardRef.current) {
-          observer.unobserve(cardRef.current);
-        }
-      };
-    }, [prop.id, prop.title?.en, lq, hq, onImageNeeded]);
+
+    const Rating = ({ score, label }) => (
+        <div className="rating">
+            <span className="rating-label">{label}</span>
+            <div className="stars">
+                {[...Array(5)].map((_, i) => <StarIcon key={i} filled={i < score} />)}
+            </div>
+        </div>
+    );
 
     return (
-        <div ref={cardRef} className="property-card">
-            <div className="property-image-container">
-                { !lq && <div className="image-loader"></div> }
-                { lq && 
-                    <img 
-                        src={lq} 
-                        alt={`${prop.title?.[language] || ''} placeholder`}
-                        className="property-image placeholder"
-                    /> 
-                }
-                { hq && 
-                    <img 
-                        src={hq} 
-                        alt={prop.title?.[language] || ''}
-                        className={`property-image final ${isHqLoaded ? 'visible' : ''}`}
-                    />
-                }
-            </div>
-            <div className="property-details">
-                <div className="property-meta">
-                    <span className="property-type">{prop.propertyType?.[language]}</span>
-                    <span className="property-agency">{prop.agency}</span>
+        <div className="property-card-container">
+          <div className="property-card">
+              <div className="card-face card-front">
+                  <div className="property-image-container">
+                      { !lq && <div className="image-loader"></div> }
+                      { lq && <img src={lq} alt={`${prop.title?.[language] || ''} placeholder`} className="property-image placeholder" /> }
+                      { hq && <img src={hq} alt={prop.title?.[language] || ''} className={`property-image final ${isHqLoaded ? 'visible' : ''}`} /> }
+                  </div>
+                  <div className="property-details">
+                      <div className="property-meta">
+                          <span className="property-type">{prop.propertyType?.[language]}</span>
+                          <span className="property-agency">{prop.agency}</span>
+                      </div>
+                      <h2 className="property-title">{prop.title?.[language]}</h2>
+                      <div className="property-location">
+                          <LocationIcon />
+                          <span>{prop.location_string?.[language]}</span>
+                      </div>
+                      <div className="property-specs">
+                          <div className="spec-item"><BedIcon /><span>{prop.bedrooms} {t.bedrooms}</span></div>
+                          <div className="spec-item"><BathIcon /><span>{prop.bathrooms} {t.bathrooms}</span></div>
+                          <div className="spec-item"><AreaIcon /><span>{prop.area} {t.areaUnit}</span></div>
+                      </div>
+                      <div className="property-pricing">
+                          <div className="price">{formatPrice(prop.price, language)} <span className="price-unit">{t.priceUnit}</span></div>
+                      </div>
+                      <div className="property-actions">
+                          <button onClick={() => onCompareToggle(prop.id)} className={`action-button compare-action ${isCompared ? 'compared' : ''}`}>{t.compare}</button>
+                          <button onClick={() => onShowMap(prop)} className="action-button">{t.viewOnMap}</button>
+                      </div>
+                  </div>
+              </div>
+              <div className="card-face card-back">
+                  <div className="property-details">
+                       <h2 className="property-title">{prop.title?.[language]}</h2>
+                       <p className="property-description">{prop.description?.[language]}</p>
+                       <div className="property-ratings">
+                          <Rating score={prop.finishing_quality} label={t.finishingQuality} />
+                          <Rating score={prop.quietness_score} label={t.quietnessScore} />
+                       </div>
+                       {prop.neighborhood_highlights && (
+                           <div className="neighborhood-highlights">
+                               <h4 className="highlights-title">{t.neighborhoodTitle}</h4>
+                               <ul>
+                                   {prop.neighborhood_highlights?.[language]?.slice(0, 3).map((item, index) => (
+                                       <li key={index}><CheckIcon /> {item}</li>
+                                   ))}
+                               </ul>
+                           </div>
+                       )}
+                       <div className="property-actions">
+                         <button className="action-button primary-action" onClick={playSound}>{t.contactAgent}</button>
+                       </div>
+                  </div>
+              </div>
+          </div>
+        </div>
+    );
+};
+
+const HeroBanner = ({ t }) => (
+    <div className="hero-banner">
+        <div className="hero-content">
+            <h1>{t.heroTitle}</h1>
+            <p>{t.heroSubtitle}</p>
+        </div>
+    </div>
+);
+
+const ComparisonModal = ({ properties, onClose, language }) => {
+    const t = translations[language];
+
+    const Rating = ({ score }) => (
+        <div className="stars">
+            {[...Array(5)].map((_, i) => <StarIcon key={i} filled={i < score} />)}
+        </div>
+    );
+    
+    return (
+        <div className="map-modal-overlay" onClick={onClose}>
+            <div className="comparison-modal-content" onClick={e => e.stopPropagation()}>
+                <div className="map-modal-header">
+                    <h3>{t.comparisonTitle}</h3>
+                    <button className="map-modal-close" onClick={onClose}>&times;</button>
                 </div>
-                <h2 className="property-title">{prop.title?.[language]}</h2>
-                <div className="property-location">
-                    <LocationIcon />
-                    <span>{prop.location_string?.[language]}</span>
-                </div>
-                 <p className="property-description">{prop.description?.[language]}</p>
-                 
-                {prop.neighborhood_highlights && (
-                    <div className="neighborhood-highlights">
-                        <h4 className="highlights-title">{t.neighborhoodTitle}</h4>
-                        <ul>
-                            {prop.neighborhood_highlights?.[language]?.map((item, index) => (
-                                <li key={index}><CheckIcon /> {item}</li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-                
-                <div className="property-specs">
-                    <div className="spec-item"><BedIcon /><span>{prop.bedrooms} {t.bedrooms}</span></div>
-                    <div className="spec-item"><BathIcon /><span>{prop.bathrooms} {t.bathrooms}</span></div>
-                    <div className="spec-item"><AreaIcon /><span>{prop.area} {t.areaUnit}</span></div>
-                </div>
-                <div className="property-pricing">
-                    <div className="price">{formatPrice(prop.price, language)} <span className="price-unit">{t.priceUnit}</span></div>
-                    <div className="down-payment">{t.downPayment}: {formatPrice(prop.downPayment, language)} {t.priceUnit}</div>
-                </div>
-                <div className="property-actions">
-                    <button className="action-button primary-action">{t.contactAgent}</button>
-                    <button onClick={() => onShowMap(prop)} className="action-button">{t.viewOnMap}</button>
+                <div className="comparison-modal-body">
+                    {properties.map(prop => (
+                        <div key={prop.id} className="comparison-column">
+                            <div className="comparison-image-container">
+                                <img src={getImageForProp(prop).hq} alt={prop.title?.[language]} />
+                            </div>
+                            <h4>{prop.title?.[language]}</h4>
+                            <div className="comparison-detail price">{formatPrice(prop.price, language)} {t.priceUnit}</div>
+                            <div className="comparison-detail"><strong>{t.areaUnit}:</strong> {prop.area}</div>
+                            <div className="comparison-detail"><strong>{t.bedrooms}:</strong> {prop.bedrooms}</div>
+                            <div className="comparison-detail"><strong>{t.bathrooms}:</strong> {prop.bathrooms}</div>
+                            <div className="comparison-detail"><strong>{t.finishingQuality}:</strong> <Rating score={prop.finishing_quality} /></div>
+                            <div className="comparison-detail"><strong>{t.quietnessScore}:</strong> <Rating score={prop.quietness_score} /></div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
     );
+};
+
+const PriceTrendChart = ({ data, language }) => {
+    const t = translations[language];
+    if (!data || data.length === 0) return null;
+
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const range = max - min;
+    const points = data.map((d, i) => {
+        const x = (i / (data.length - 1)) * 300;
+        const y = 100 - ((d - min) / range) * 80; // 80 to leave some padding
+        return `${x},${y}`;
+    }).join(' ');
+
+    return (
+        <div className="price-trend-chart">
+            <h4>{t.priceTrend}</h4>
+            <svg viewBox="0 0 300 100" preserveAspectRatio="none">
+                <polyline fill="none" stroke="var(--primary-color)" strokeWidth="2" points={points} />
+            </svg>
+        </div>
+    );
+};
+
+const NeighborhoodReportModal = ({ neighborhood, onClose, language, ai }) => {
+    const t = translations[language];
+    const [report, setReport] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchReport = async () => {
+            if (!neighborhood) return;
+            setLoading(true);
+            try {
+                const result = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: `Generate a fictional but realistic neighborhood report for "${neighborhood}" in Egypt. Provide a JSON object with: liveability_score (a number between 1 and 10), and price_trend (an array of 12 numbers representing fictional percentage price change over the last 12 months).`,
+                    config: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: Type.OBJECT,
+                            properties: {
+                                liveability_score: { type: Type.NUMBER },
+                                price_trend: { type: Type.ARRAY, items: { type: Type.NUMBER } }
+                            }
+                        }
+                    }
+                });
+                setReport(JSON.parse(result.text));
+            } catch (e) {
+                console.error("Failed to fetch neighborhood report", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchReport();
+    }, [neighborhood, ai]);
+
+    return (
+        <div className="map-modal-overlay" onClick={onClose}>
+            <div className="map-modal-content" onClick={e => e.stopPropagation()}>
+                <div className="map-modal-header">
+                    <h3>{t.neighborhoodReport}: {neighborhood}</h3>
+                    <button className="map-modal-close" onClick={onClose}>&times;</button>
+                </div>
+                <div className="map-modal-body">
+                    {loading && <div className="loader">{t.loading}</div>}
+                    {!loading && report && (
+                        <div>
+                            <div className="liveability-score">
+                                <h4>{t.liveabilityScore}</h4>
+                                <div className="score-circle"><span>{report.liveability_score.toFixed(1)}</span>/10</div>
+                            </div>
+                            <PriceTrendChart data={report.price_trend} language={language} />
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const MortgageCalculator = ({ t }) => {
+    const [price, setPrice] = useState(5000000);
+    const [downPayment, setDownPayment] = useState(1000000);
+    const [term, setTerm] = useState(20);
+    const [rate, setRate] = useState(8);
+
+    const monthlyPayment = useMemo(() => {
+        const principal = price - downPayment;
+        if (principal <= 0) return 0;
+        const monthlyRate = rate / 100 / 12;
+        const numberOfPayments = term * 12;
+        if (monthlyRate === 0) return principal / numberOfPayments;
+        const payment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+        return payment;
+    }, [price, downPayment, term, rate]);
+    
+    return (
+        <div className="mortgage-calculator">
+             <h3 className="sidebar-subtitle">{t.mortgageCalculator}</h3>
+             <div className="filter-group">
+                <label>{t.propertyPrice}: {formatPrice(price, t.toggleLang === 'English' ? 'ar' : 'en')} {t.priceUnit}</label>
+                <input type="range" min="500000" max="20000000" step="100000" value={price} onChange={e => setPrice(Number(e.target.value))} />
+             </div>
+             <div className="filter-group">
+                <label>{t.downPayment}: {formatPrice(downPayment, t.toggleLang === 'English' ? 'ar' : 'en')} {t.priceUnit}</label>
+                <input type="range" min="100000" max={price} step="50000" value={downPayment} onChange={e => setDownPayment(Number(e.target.value))} />
+             </div>
+             <div className="filter-group">
+                <label>{t.loanTerm}: {term}</label>
+                <input type="range" min="5" max="30" value={term} onChange={e => setTerm(Number(e.target.value))} />
+             </div>
+              <div className="filter-group">
+                <label>{t.interestRate}: {rate}%</label>
+                <input type="range" min="1" max="20" step="0.25" value={rate} onChange={e => setRate(Number(e.target.value))} />
+             </div>
+             <div className="monthly-payment">
+                <h4>{t.monthlyPayment}</h4>
+                <p>{formatPrice(monthlyPayment.toFixed(0), t.toggleLang === 'English' ? 'ar' : 'en')} {t.priceUnit}</p>
+             </div>
+        </div>
+    );
+};
+
+
+const getImageForProp = (prop) => {
+    const type = prop.propertyType?.en?.toLowerCase() || '';
+    if (type.includes('villa')) return villaImages[(prop.id || 0) % villaImages.length];
+    if (type.includes('apartment')) return apartmentImages[(prop.id || 0) % apartmentImages.length];
+    return fallbackImage;
 };
 
 const App = () => {
@@ -200,11 +429,14 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [mapProperty, setMapProperty] = useState(null);
-  const [imageCache, setImageCache] = useState({});
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const [comparisonItems, setComparisonItems] = useState([]);
+  const [showComparison, setShowComparison] = useState(false);
+  const [reportingNeighborhood, setReportingNeighborhood] = useState(null);
   const [filters, setFilters] = useState({
     location: 'all',
     propertyType: 'all',
+    features: [],
   });
 
   const ai = useMemo(() => new GoogleGenAI({ apiKey: process.env.API_KEY }), []);
@@ -223,26 +455,20 @@ const App = () => {
     const fetchProperties = async () => {
         setLoading(true);
         setError('');
-
         try {
             const cachedProps = sessionStorage.getItem('cachedProperties');
-            const cachedImages = sessionStorage.getItem('cachedImages');
             if (cachedProps) {
                 setProperties(JSON.parse(cachedProps));
-                if (cachedImages) {
-                    setImageCache(JSON.parse(cachedImages));
-                }
                 setLoading(false);
+                playSound();
                 return;
             }
-        } catch (e) {
-            console.error("Failed to read from sessionStorage", e);
-        }
+        } catch (e) { console.error("Failed to read from sessionStorage", e); }
 
         try {
             const result = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
-                contents: `Generate a list of 12 fictional luxury real estate properties for sale in Egypt. Six in "New Cairo" and six in "6th of October City". Provide a JSON array. Each object needs: id, title (en/ar), description (en/ar, a compelling 2-3 sentence narrative about the lifestyle this property offers), location_string (en/ar, e.g., "Mivida, New Cairo"), price (EGP), downPayment (EGP), propertyType (en/ar, e.g., "Villa", "Apartment"), bedrooms, bathrooms, area (sqm), agency (fictional name), location (lat/lng), and neighborhood_highlights (en/ar, an array of 3 short, key features of the surrounding area like '5 minutes from AUC' or 'Overlooks a central park').`,
+                contents: `Generate a list of 12 fictional luxury real estate properties for sale in Egypt. Six in "New Cairo" and six in "6th of October City". Provide a JSON array. Each object needs: id, title (en/ar), description (en/ar, a compelling 2-3 sentence narrative), location_string (en/ar), price (EGP), downPayment (EGP), propertyType (en/ar, e.g., "Villa", "Apartment"), bedrooms, bathrooms, area (sqm), agency (fictional name), location (lat/lng), neighborhood_highlights (en/ar, an array of 3 key features), features (en/ar, an array of 2-4 string tags from this list: "Private Pool", "Sea View", "Luxury Finish", "Private Garden", "Near a Gym", "Quiet Area"), finishing_quality (a number 1-5), and quietness_score (a number 1-5).`,
                 config: {
                     responseMimeType: "application/json",
                     responseSchema: {
@@ -262,13 +488,10 @@ const App = () => {
                                 area: { type: Type.NUMBER },
                                 agency: { type: Type.STRING },
                                 location: { type: Type.OBJECT, properties: { lat: { type: Type.NUMBER }, lng: { type: Type.NUMBER } } },
-                                neighborhood_highlights: { 
-                                    type: Type.OBJECT,
-                                    properties: {
-                                        en: { type: Type.ARRAY, items: { type: Type.STRING }},
-                                        ar: { type: Type.ARRAY, items: { type: Type.STRING }}
-                                    }
-                                }
+                                neighborhood_highlights: { type: Type.OBJECT, properties: { en: { type: Type.ARRAY, items: { type: Type.STRING }}, ar: { type: Type.ARRAY, items: { type: Type.STRING }}} },
+                                features: { type: Type.OBJECT, properties: { en: { type: Type.ARRAY, items: { type: Type.STRING }}, ar: { type: Type.ARRAY, items: { type: Type.STRING }}} },
+                                finishing_quality: { type: Type.NUMBER },
+                                quietness_score: { type: Type.NUMBER }
                             }
                         }
                     }
@@ -282,58 +505,13 @@ const App = () => {
             setError(translations[language].error);
         } finally {
             setLoading(false);
+            playSound();
         }
     };
 
     fetchProperties();
   }, [ai, language]);
 
-  const fetchImageForProperty = useCallback(async (id, description) => {
-    if (imageCache[id] || !description) return;
-
-    setImageCache(prev => ({ ...prev, [id]: { lq: undefined, hq: undefined } }));
-
-    // Fetch Low Quality Image First
-    try {
-        const lqResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
-            contents: { parts: [{ text: `Generate a very fast, extremely blurry, low-resolution placeholder image of a luxury property exterior: "${description}"` }] },
-            config: { responseModalities: ['IMAGE'] },
-        });
-        const lqPart = lqResponse.candidates[0]?.content?.parts.find(p => p.inlineData);
-        if (lqPart) {
-            const lqUrl = `data:image/png;base64,${lqPart.inlineData.data}`;
-            setImageCache(prev => ({ ...prev, [id]: { ...prev[id], lq: lqUrl } }));
-        }
-    } catch (e) {
-        console.error(`Failed to generate LQ image for ${id}:`, e);
-    }
-
-    // Then Fetch High Quality Image
-    try {
-        const hqResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
-            contents: { parts: [{ text: `Professional real estate photography of a modern luxury property exterior. Golden hour lighting, wide-angle lens, crisp details, vibrant but natural colors. Based on this title: "${description}"` }] },
-            config: { responseModalities: ['IMAGE'] },
-        });
-        const hqPart = hqResponse.candidates[0]?.content?.parts.find(p => p.inlineData);
-        if (hqPart) {
-            const hqUrl = `data:image/png;base64,${hqPart.inlineData.data}`;
-            setImageCache(prev => {
-                const newCache = { ...prev, [id]: { ...prev[id], hq: hqUrl } };
-                try {
-                   sessionStorage.setItem('cachedImages', JSON.stringify(newCache));
-                } catch(e) {
-                   console.error("Failed to write images to sessionStorage", e);
-                }
-                return newCache;
-            });
-        }
-    } catch (e) {
-        console.error(`Failed to generate HQ image for ${id}:`, e);
-    }
-  }, [ai, imageCache]);
-  
   const t = translations[language];
   const toggleLanguage = () => setLanguage(lang => lang === 'en' ? 'ar' : 'en');
   const toggleTheme = () => setIsDarkMode(dark => !dark);
@@ -341,6 +519,15 @@ const App = () => {
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleFeatureToggle = (featureKey) => {
+    setFilters(prev => {
+        const newFeatures = prev.features.includes(featureKey)
+            ? prev.features.filter(f => f !== featureKey)
+            : [...prev.features, featureKey];
+        return { ...prev, features: newFeatures };
+    });
   };
 
   const uniqueLocations = useMemo(() => {
@@ -353,14 +540,31 @@ const App = () => {
     return [...new Set(types)];
   }, [properties, language]);
 
-
   const filteredProperties = useMemo(() => {
     return properties.filter(prop => {
         const locationMatch = filters.location === 'all' || prop.location_string?.[language]?.includes(filters.location);
         const typeMatch = filters.propertyType === 'all' || prop.propertyType?.[language] === filters.propertyType;
-        return locationMatch && typeMatch;
+        const featureMatch = filters.features.every(featureKey => prop.features?.[language]?.includes(DREAM_FEATURES[featureKey][language]));
+        return locationMatch && typeMatch && featureMatch;
     });
   }, [properties, filters, language]);
+  
+  const handleCompareToggle = useCallback((propId) => {
+    setComparisonItems(prev => {
+        if (prev.includes(propId)) {
+            return prev.filter(id => id !== propId);
+        }
+        if (prev.length < 3) {
+            return [...prev, propId];
+        }
+        // Optional: show a notification that max 3 items can be compared
+        return prev;
+    });
+  }, []);
+
+  const comparisonProperties = useMemo(() => {
+    return properties.filter(p => comparisonItems.includes(p.id));
+  }, [comparisonItems, properties]);
 
   return (
     <>
@@ -393,10 +597,13 @@ const App = () => {
             <h2 className="sidebar-title">{t.filtersTitle}</h2>
             <div className="filter-group">
                 <label htmlFor="location-filter">{t.location}</label>
-                <select id="location-filter" name="location" value={filters.location} onChange={handleFilterChange}>
-                    <option value="all">{t.all}</option>
-                    {uniqueLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
-                </select>
+                <div className="location-filter-container">
+                    <select id="location-filter" name="location" value={filters.location} onChange={handleFilterChange}>
+                        <option value="all">{t.all}</option>
+                        {uniqueLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+                    </select>
+                    <button className="view-report-btn" onClick={() => filters.location !== 'all' && setReportingNeighborhood(filters.location)} disabled={filters.location === 'all'}>{t.viewReport}</button>
+                </div>
             </div>
             <div className="filter-group">
                 <label htmlFor="type-filter">{t.propertyType}</label>
@@ -405,25 +612,56 @@ const App = () => {
                     {uniquePropTypes.map(type => <option key={type} value={type}>{type}</option>)}
                 </select>
             </div>
+            <div className="filter-group">
+                <h3 className="sidebar-subtitle">{t.dreamFeaturesTitle}</h3>
+                <div className="features-grid">
+                    {Object.keys(DREAM_FEATURES).map(key => (
+                        <button key={key} className={`feature-button ${filters.features.includes(key) ? 'active' : ''}`} onClick={() => handleFeatureToggle(key)}>
+                            {DREAM_FEATURES[key][language]}
+                        </button>
+                    ))}
+                </div>
+            </div>
+             <MortgageCalculator t={t} />
         </aside>
 
         <main className="main-content">
+            <HeroBanner t={t} />
             {error && <div className="error">{error}</div>}
             <div className="property-list">
                 {loading && Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
                 {!loading && !error && filteredProperties.map(prop => (
                     <PropertyCard 
-                        key={prop.id}
-                        prop={prop}
-                        language={language}
-                        imageSrcs={imageCache[prop.id]}
-                        onImageNeeded={fetchImageForProperty}
+                        key={prop.id} prop={prop} language={language}
+                        imageSrcs={getImageForProp(prop)}
                         onShowMap={setMapProperty}
+                        onCompareToggle={handleCompareToggle}
+                        isCompared={comparisonItems.includes(prop.id)}
                     />
                 ))}
             </div>
         </main>
       </div>
+
+      {comparisonItems.length > 0 && (
+          <div className="comparison-bar">
+              <div className="comparison-info">
+                  <span>{comparisonItems.length} {t.compare}</span>
+              </div>
+              <div className="comparison-actions">
+                  <button onClick={() => setShowComparison(true)} disabled={comparisonItems.length < 2}>{t.compareNow}</button>
+                  <button onClick={() => setComparisonItems([])}>{t.clearComparison}</button>
+              </div>
+          </div>
+      )}
+
+      {showComparison && (
+          <ComparisonModal properties={comparisonProperties} onClose={() => setShowComparison(false)} language={language} />
+      )}
+
+      {reportingNeighborhood && (
+        <NeighborhoodReportModal neighborhood={reportingNeighborhood} onClose={() => setReportingNeighborhood(null)} language={language} ai={ai} />
+      )}
 
       {mapProperty && (
         <div className="map-modal-overlay" onClick={() => setMapProperty(null)}>
